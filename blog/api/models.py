@@ -21,6 +21,14 @@ class Comment(models.Model):
         related_name='comments',
         verbose_name='Статья'
     )
+    third_lvl_parent = models.ForeignKey(
+        'self',
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name='farther_comments',
+        verbose_name='Предок третьего уровня'
+    )
     level = models.PositiveIntegerField('Вложенность')
     parent = models.ForeignKey(
         'self',
@@ -33,7 +41,7 @@ class Comment(models.Model):
     text = models.TextField('Текст')
 
     class Meta:
-        ordering = ['-id']
+        ordering = ['id']
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 

@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from api.models import Article, Comment
+from api.validators import check_natural_number
 
 
 class ArticleSerializer(serializers.ModelSerializer):
@@ -19,16 +20,7 @@ class CommentSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         parent_id = self.context.get('request').query_params.get('parent')
         if parent_id is not None:
-            try:
-                parent_id = int(parent_id)
-                if parent_id < 1:
-                    raise serializers.ValidationError(
-                        {"parent": "Число должно быть больше нуля"}
-                    )
-            except ValueError:
-                raise serializers.ValidationError(
-                    {"parent": "Число должно быть натуральным"}
-                )
+            check_natural_number(parent_id, 'parent')
         return attrs
 
     def create(self, validated_data):

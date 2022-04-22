@@ -25,6 +25,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         parent_id = self.context.get('request').query_params.get('parent')
+        # если параметр parent не передан, то это комментарий высшего уровня,
+        # и у него нет предка-комментария - поле parent не заполняем
         if parent_id is None:
             return Comment.objects.create(level=1, **validated_data)
 
@@ -33,7 +35,26 @@ class CommentSerializer(serializers.ModelSerializer):
             id=parent_id,
             article=validated_data.get('article')
         )
+        # если родительский комментарий ниже третьего уровня вложенности,
+        # то в поле third_lvl_parent ничего не записываем
+        if parent.level < 3:
+            instance = Comment.objects.create(
+                level=parent.level + 1,
+                parent=parent,
+                **validated_data
+            )
+            return instance
+
+        # если родительский комментарий - комментарий третьего уровня,
+        # то в поле third_lvl_parent записываем его id
+        if parent.level == 3:
+            third_lvl_parent = parent
+        # если у родительского комментария есть предок третьего уровня
+        if parent.third_lvl_parent:
+            third_lvl_parent = parent.third_lvl_parent
+
         instance = Comment.objects.create(
+            third_lvl_parent=third_lvl_parent,
             level=parent.level + 1,
             parent=parent,
             **validated_data

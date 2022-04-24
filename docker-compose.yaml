@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - /var/lib/postgresql/data/
+    env_file:
+      - ./blog/.env
+
+  web:
+    build: ./blog/
+    restart: always
+    command: gunicorn blog.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - static:/blog_api/static/
+    depends_on:
+      - db
+    env_file:
+      - ./blog/.env
+
+  nginx:
+    image: nginx:1.21.6-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf
+      - static:/var/html/static/
+    depends_on:
+      - web
+
+volumes:
+  static:
